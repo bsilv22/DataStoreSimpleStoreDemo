@@ -7,9 +7,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +24,12 @@ import edu.farmingdale.datastoresimplestoredemo.data.AppPreferences
 import edu.farmingdale.datastoresimplestoredemo.ui.theme.DataStoreSimpleStoreDemoTheme
 import kotlinx.coroutines.launch
 import java.io.FileOutputStream
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxWidth
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,26 +73,55 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DataStoreDemo(modifier: Modifier) {
-    val store = AppStorage(LocalContext.current)
-    val appPrefs = store.appPreferenceFlow.collectAsState(AppPreferences())
-    val coroutineScope = rememberCoroutineScope()
-    Column (modifier = Modifier.padding(50.dp)) {
-        Text("Values = ${appPrefs.value.userName}, " +
-                "${appPrefs.value.highScore}, ${appPrefs.value.darkMode}")
-        Button(onClick = {
-            coroutineScope.launch {
-                store.saveUsername("flygirl")
-                store.saveHighScore(100)
-                store.saveDarkMode(true)
-            }
+fun DataStoreDemo(modifier: Modifier = Modifier) {
+    var rdname by remember { mutableStateOf("") }  // Initialize with an empty string
 
-        }) {
+    // Initialize DataStore
+    val store = AppStorage(LocalContext.current)
+
+    // Collect the current app preferences from DataStore
+    val appPrefs = store.appPreferenceFlow.collectAsState(initial = AppPreferences())
+
+    // Initialize CoroutineScope
+    val coroutineScope = rememberCoroutineScope()
+
+    // UI Layout
+    Column(modifier = modifier.padding(50.dp)) {
+        Spacer(modifier = Modifier.padding(16.dp))
+
+        // Text field to input the username
+        OutlinedTextField(
+            value = rdname,
+            onValueChange = { rdname = it },
+            label = { Text("Enter Username") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.padding(16.dp))
+
+        // Display stored values (username, high score, dark mode status)
+        Text(
+            text = "Stored Values:\nUsername: ${appPrefs.value.userName}\n" +
+                    "High Score: ${appPrefs.value.highScore}\n" +
+                    "Dark Mode: ${appPrefs.value.darkMode}",
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
+//testing
+        // Button to save values to DataStore
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    store.saveUsername(rdname)  // Save the entered username
+                    store.saveHighScore(100)    // Save a high score
+                    store.saveDarkMode(true)    // Save dark mode preference
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Save Values")
         }
     }
 }
-
 // ToDo 1: Modify the App to store a high score and a dark mode preference
 // ToDo 2: Modify the APP to store the username through a text field
 // ToDo 3: Modify the App to save the username when the button is clicked
